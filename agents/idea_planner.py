@@ -87,7 +87,7 @@ async def generate_graph(idea: str) -> SystemGraph:
         },
     }
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=300.0) as client:
         response = await client.post(
             f"{OLLAMA_BASE_URL}/api/chat",
             json=payload,
