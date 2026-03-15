@@ -12,7 +12,7 @@ load_dotenv()
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 # Model used for idea → system graph planning
-PLANNER_MODEL = os.getenv("PLANNER_MODEL", "qwen2.5:7b-instruct")
+PLANNER_MODEL = os.getenv("PLANNER_MODEL", "qwen2.5-coder")
 
 # Model used for task → code generation
 CODER_MODEL = os.getenv("CODER_MODEL", "qwen2.5-coder")

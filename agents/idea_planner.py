@@ -44,11 +44,12 @@ system architecture graph in JSON format.
 
 RULES:
 1. Always output ONLY valid JSON (no markdown, no explanation).
-2. Node "type" must be one of: idea, frontend, backend, database, api, service, cache, queue.
-3. Every graph must have at least one "idea" node connected to the system.
-4. Backend nodes must connect to at least one database or service node.
-5. Include realistic "config" with framework, language, engine, or port as appropriate.
-6. Use descriptive "label" values.
+2. EVERY node MUST have an "id" field (unique string identifier). THIS IS STRICTLY REQUIRED.
+3. Node "type" must be one of: idea, frontend, backend, database, api, service, cache, queue.
+4. Every graph must have at least one "idea" node connected to the system.
+5. Backend nodes must connect to at least one database or service node.
+6. Include realistic "config" with framework, language, engine, or port as appropriate.
+7. Use descriptive "label" values.
 
 {FEW_SHOT_EXAMPLE}
 
@@ -99,6 +100,16 @@ async def generate_graph(idea: str) -> SystemGraph:
 
     # Parse and validate
     graph_data = json.loads(raw_content)
+
+    # ── Fallback fix for LLM missing required fields ──
+    import uuid
+    if isinstance(graph_data.get("nodes"), list):
+        for i, node in enumerate(graph_data["nodes"]):
+            if isinstance(node, dict) and "id" not in node:
+                # Fallback to generate a unique ID if the model forgot it
+                base_type = node.get("type", "node")
+                node["id"] = f"{base_type}_{uuid.uuid4().hex[:6]}"
+
     graph = SystemGraph.model_validate(graph_data)
 
     logger.info(f"Graph generated: {len(graph.nodes)} nodes, {len(graph.edges)} edges")
