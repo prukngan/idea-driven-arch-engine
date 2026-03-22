@@ -23,6 +23,7 @@ from models.schemas import (
     GenerateCodeRequest,
     GenerateCodeResponse,
     GeneratedFile,
+    FlushRequest,
 )
 from agents import idea_planner, graph_planner, code_generator
 from tools.file_writer import VirtualFileSystem
@@ -171,15 +172,40 @@ async def list_vfs_files():
 
 
 @app.post("/api/vfs/flush")
-async def flush_vfs():
+async def flush_vfs(request: FlushRequest | None = None):
     """
     Persist all VFS-buffered files to disk.
     This is the user's explicit "confirm write" action.
+    Creates a separate project folder for each flush.
     """
     try:
-        written = vfs.flush()
+        if len(vfs) == 0:
+            return {"written": [], "count": 0, "message": "Nothing to flush"}
+
+        import datetime
+        import os
+        from config import OUTPUT_ROOT
+        import re
+        
+        # Determine the project directory name
+        if request and request.project_name:
+            # Clean the project name to ensure it's a valid directory name
+            safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', request.project_name.strip())
+            project_name = safe_name
+        else:
+            project_name = f"project_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+        project_dir = os.path.join(OUTPUT_ROOT, project_name)
+        
+        written = vfs.flush(output_dir=project_dir)
         vfs.clear()
-        return {"written": written, "count": len(written)}
+        
+        return {
+            "written": written,
+            "count": len(written),
+            "project_dir": project_name,
+            "message": f"Successfully written to {project_dir}"
+        }
     except Exception as e:
         logger.error(f"VFS flush failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

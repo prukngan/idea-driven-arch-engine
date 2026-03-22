@@ -137,3 +137,7 @@ class GenerateCodeResponse(BaseModel):
     """Response from the code generation endpoint."""
     files: list[GeneratedFile] = Field(default_factory=list)
     message: str = "Code generated successfully"
+
+class FlushRequest(BaseModel):
+    """Request body for flushing VFS."""
+    project_name: str | None = None
